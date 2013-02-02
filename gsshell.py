@@ -3,10 +3,10 @@ import sublime_plugin
 import gscommon as gs
 import re
 import os
-import httplib
+import http.client
 import hashlib
 import threading
-import Queue
+import queue as Queue
 import traceback
 import subprocess
 import time
@@ -70,7 +70,7 @@ class Prompt(object):
 					return
 
 				try:
-					c = httplib.HTTPConnection(host)
+					c = http.client.HTTPConnection(host)
 					src = gs.astr(self.view.substr(sublime.Region(0, self.view.size())))
 					c.request('POST', '/share', src, {'User-Agent': 'GoSublime'})
 					s = 'http://%s/p/%s' % (host, c.getresponse().read())
@@ -129,7 +129,7 @@ class Prompt(object):
 			panel.set_read_only(True)
 		finally:
 			panel.end_edit(edit)
-		print('%s output: %s' % (DOMAIN, s))
+		print(('%s output: %s' % (DOMAIN, s)))
 		self.view.window().run_command("show_panel", {"panel": "output.%s" % panel_name})
 		if focus:
 			sublime.set_timeout(lambda: win.focus_view(panel), 0)
@@ -188,7 +188,7 @@ def command_on_done(c):
 
 def fix_env(env):
 	e = {}
-	for k,v in env.items():
+	for k,v in list(env.items()):
 		e[k] = str(v)
 	return e
 
@@ -260,17 +260,17 @@ def proc(cmd, shell=False, env={}, cwd=None, input=None, stdout=subprocess.PIPE,
 	return (p, opts, err)
 
 def run(cmd=[], shell=False, env={}, cwd=None, input=None, stderr=subprocess.STDOUT):
-	out = u""
-	err = u""
+	out = ""
+	err = ""
 	exc = None
 
 	try:
 		p, opts, err = proc(cmd, input=input, shell=shell, stderr=stderr, env=env, cwd=cwd)
 		if p:
 			out, _ = p.communicate(input=opts.get('input'))
-			out = gs.ustr(out) if out else u''
+			out = gs.ustr(out) if out else ''
 	except Exception as ex:
-		err = u'Error communicating with command %s: %s' % (opts.get('cmd'), gs.traceback())
+		err = 'Error communicating with command %s: %s' % (opts.get('cmd'), gs.traceback())
 		exc = ex
 
 	return (out, err, exc)
@@ -285,7 +285,7 @@ class CommandStdoutReader(threading.Thread):
 	def run(self):
 		try:
 			while True:
-				line = self.stdout.readline()
+				line = self.stdout.readline().decode(sys.getdefaultencoding())
 
 				if not line:
 					self.c.close_stdout()
@@ -453,7 +453,7 @@ class ViewCommand(Command):
 	def write_lines(self, view, edit, lines):
 		for ln in lines:
 			try:
-				view.insert(edit, view.size(), u'%s\n' % ln)
+				view.insert(edit, view.size(), '%s\n' % ln)
 			except Exception:
 				gs.println(gs.traceback(DOMAIN))
 		view.show(view.line(view.size() - 1).begin())

@@ -1,6 +1,6 @@
 import gscommon as gs
 import threading
-import Queue
+import queue as Queue
 import sublime
 
 DOMAIN = 'GsQ'

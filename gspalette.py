@@ -69,10 +69,10 @@ class GsPaletteCommand(sublime_plugin.WindowCommand):
 				if fn.startswith('..'):
 					fn = loc.fn
 				fn = '%s ' % fn
-			self.add_item(u'\u2190 Go Back (%s%s)' % (fn, line), self.jump_back, None)
+			self.add_item('\u2190 Go Back (%s%s)' % (fn, line), self.jump_back, None)
 
 		if not direct and palette:
-			self.add_item(u'@%s \u21B5' % palette.title(), self.show_palette, 'main')
+			self.add_item('@%s \u21B5' % palette.title(), self.show_palette, 'main')
 
 		li1 = len(self.items)
 		if pcb:

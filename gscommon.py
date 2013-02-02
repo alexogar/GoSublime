@@ -2,6 +2,7 @@
 # sublime: translate_tabs_to_spaces false; rulers [100,120]
 
 import sublime
+import sublime_plugin
 import subprocess
 import re
 import os
@@ -65,15 +66,15 @@ except:
 
 
 	CLASS_PREFIXES = {
-		'const': u'\u0196',
-		'func': u'\u0192',
-		'type': u'\u0288',
-		'var':  u'\u03BD',
-		'package': u'package \u03C1',
+		'const': '\u0196',
+		'func': '\u0192',
+		'type': '\u0288',
+		'var':  '\u03BD',
+		'package': 'package \u03C1',
 	}
 
 	NAME_PREFIXES = {
-		'interface': u'\u00A1',
+		'interface': '\u00A1',
 	}
 
 	GOARCHES = [
@@ -140,7 +141,7 @@ def basedir_or_cwd(fn):
 
 def popen(args, stdout=PIPE, stderr=PIPE, shell=False, environ={}, cwd=None, bufsize=0):
 	ev = env()
-	for k,v in environ.iteritems():
+	for k,v in environ.items():
 		ev[astr(k)] = astr(v)
 
 	try:
@@ -164,7 +165,7 @@ def runcmd(args, input=None, stdout=PIPE, stderr=PIPE, shell=False, environ={}, 
 		out = out.decode('utf-8') if out else ''
 		err = err.decode('utf-8') if err else ''
 	except (Exception) as e:
-		err = u'Error while running %s: %s' % (args[0], e)
+		err = 'Error while running %s: %s' % (args[0], e)
 		exc = e
 
 	return (out, err, exc)
@@ -173,7 +174,7 @@ def is_a(v, base):
 	return isinstance(v, type(base))
 
 def is_a_string(v):
-	return isinstance(v, basestring)
+	return isinstance(v, str)
 
 def settings_obj():
 	return sublime.load_settings("GoSublime.sublime-settings")
@@ -215,9 +216,9 @@ def println(*a):
 
 def debug(domain, *a):
 	if setting('_debug') is True:
-		print('\n** DEBUG ** %s ** %s **:' % (domain, datetime.datetime.now()))
+		print(('\n** DEBUG ** %s ** %s **:' % (domain, datetime.datetime.now())))
 		for s in a:
-			print(ustr(s).strip())
+			print((ustr(s).strip()))
 		print('--------------------------------')
 
 def log(*a):
@@ -261,6 +262,14 @@ def notice_undo(domain, txt, view, should_undo):
 		notice(domain, txt)
 	sublime.set_timeout(cb, 0)
 
+class GoSublimeSetPanelOutputCommand(sublime_plugin.TextCommand):
+	def run(self, edit, replace, s):
+		panel = self.view
+		if replace:
+			panel.replace(edit, sublime.Region(0, panel.size()), s)
+		else:
+			panel.insert(edit, panel.size(), s+'\n')
+
 def show_output(domain, s, print_output=True, syntax_file='', replace=True, merge_domain=False, scroll_end=False):
 	def cb(domain, s, print_output, win):
 		panel_name = '%s-output' % domain
@@ -274,16 +283,8 @@ def show_output(domain, s, print_output=True, syntax_file='', replace=True, merg
 		win = sublime.active_window()
 		if win:
 			panel = win.get_output_panel(panel_name)
-			edit = panel.begin_edit()
 			panel.set_read_only(False)
-
-			try:
-				if replace:
-					panel.replace(edit, sublime.Region(0, panel.size()), s)
-				else:
-					panel.insert(edit, panel.size(), s+'\n')
-			finally:
-				panel.end_edit(edit)
+			panel.run_command("go_sublime_set_panel_output", {"replace": replace, "s": s})
 
 			panel.sel().clear()
 			pst = panel.settings()
@@ -416,7 +417,7 @@ def env(m={}):
 	# 	  http://stackoverflow.com/q/12253014/1670
 	#   * Avoids issues with networking too.
 	clean_env = {}
-	for k, v in e.iteritems():
+	for k, v in e.items():
 		try:
 			clean_env[astr(k)] = astr(v)
 		except Exception as ex:
@@ -514,9 +515,9 @@ def sm_cb():
 
 	if ntasks > 0:
 		if s:
-			s = u'%s, %s' % (sm_frames[sm_frame], s)
+			s = '%s, %s' % (sm_frames[sm_frame], s)
 		else:
-			s = u'%s' % sm_frames[sm_frame]
+			s = '%s' % sm_frames[sm_frame]
 
 		if ntasks > 1:
 			s = '%d %s' % (ntasks, s)
@@ -576,7 +577,7 @@ def clear_tasks():
 
 def task_list():
 	with sm_lck:
-		return sorted(sm_tasks.iteritems())
+		return sorted(sm_tasks.items())
 
 def cancel_task(tid):
 	t = task(tid)
@@ -617,7 +618,7 @@ def list_dir_tree(dirname, filter, exclude_prefix=('.', '_')):
 					pathname = fn.lower()
 					_, ext = os.path.splitext(basename)
 					ext = ext.lstrip('.')
-					if filter(pathname, basename, ext):
+					if list(filter(pathname, basename, ext)):
 						lst.append(fn)
 				else:
 					lst.append(fn)
@@ -633,14 +634,14 @@ def show_traceback(domain):
 	show_output(domain, traceback(), replace=False, merge_domain=False)
 
 def ustr(s):
-	if isinstance(s, unicode):
+	if isinstance(s, str):
 		return s
-	return str(s).decode('utf-8')
+	return s.decode('utf-8')
 
 def astr(s):
-	if isinstance(s, unicode):
-		return s.encode('utf-8')
-	return str(s)
+	if isinstance(s, str):
+		return s
+	return str(s.decode('utf-8'))
 
 def lst(*a):
 	l = []
@@ -662,10 +663,10 @@ def dval(v, d):
 	return d
 
 def dist_path(*a):
-	return os.path.join(sublime.packages_path(), 'GoSublime', *a)
+	return os.path.join(os.path.dirname(__file__), *a)
 
 def home_path(*a):
-	p = os.path.join(sublime.packages_path(), 'User', 'GoSublime', '9')
+	p = os.path.join(os.path.dirname(__file__), '..', 'User', 'GoSublime', '9')
 	if not os.path.exists(p):
 		try:
 			os.makedirs(p)
@@ -728,6 +729,7 @@ def sel(view, i=0):
 	except Exception:
 		return sublime.Region(0, 0)
 
+
 try:
 	st2_status_message
 except:
@@ -736,10 +738,10 @@ except:
 	sm_tasks = {}
 	sm_frame = 0
 	sm_frames = (
-		u'\u25D2',
-		u'\u25D1',
-		u'\u25D3',
-		u'\u25D0'
+		'\u25D2',
+		'\u25D1',
+		'\u25D3',
+		'\u25D0'
 	)
 	sm_tm = datetime.datetime.now()
 	sm_text = ''
@@ -758,6 +760,7 @@ except:
 		notice(NAME, 'Cannot create log file. Remote(margo) and persistent logging will be disabled. Error: %s' % ex)
 
 # init
-settings_obj().clear_on_change("GoSublime.settings")
-settings_obj().add_on_change("GoSublime.settings", sync_settings)
-sync_settings()
+def plugin_loaded():
+	settings_obj().clear_on_change("GoSublime.settings")
+	settings_obj().add_on_change("GoSublime.settings", sync_settings)
+	sync_settings()

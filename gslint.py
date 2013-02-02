@@ -5,7 +5,7 @@ import gsshell
 import sublime
 import sublime_plugin
 import threading
-import Queue
+import queue
 import time
 import os
 import re
@@ -33,7 +33,7 @@ class GsLintThread(threading.Thread):
 		self.daemon = True
 		self.sem = threading.Semaphore()
 		self.s = set()
-		self.q = Queue.Queue()
+		self.q = queue.Queue()
 
 	def putq(self, fn):
 		with self.sem:
@@ -82,7 +82,7 @@ def highlight(fr):
 		regions = []
 		regions0 = []
 		domain0 = DOMAIN+'-zero'
-		for r in fr.reports.values():
+		for r in list(fr.reports.values()):
 			line = fr.view.line(fr.view.text_point(r.row, 0))
 			pos = line.begin() + r.col
 			if pos >= line.end():
@@ -112,7 +112,7 @@ def highlight(fr):
 			msg = '%s: %s' % (msg, r.msg)
 
 	if fr.state != 0:
-		msg = u'\u231B %s' % msg
+		msg = '\u231B %s' % msg
 
 	fr.view.set_status(DOMAIN, msg)
 
@@ -182,7 +182,7 @@ def watch():
 def ref(fn, validate=True):
 	with sem:
 		if validate:
-			for fn, fr in file_refs.items():
+			for fn, fr in list(file_refs.items()):
 				if not fr.view.window() or fn != fr.view.file_name():
 					del file_refs[fn]
 		return file_refs.get(fn)

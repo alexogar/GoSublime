@@ -1,4 +1,4 @@
-import subprocess, httplib, urllib, json, traceback, os
+import subprocess, http.client, urllib.request, urllib.parse, urllib.error, json, traceback, os
 import sublime
 import gscommon as gs, gsq
 
@@ -14,7 +14,7 @@ class Conn(object):
 				self.c.close()
 			except:
 				pass
-		self.c = httplib.HTTPConnection(gs.setting('margo_addr', ''), timeout=5)
+		self.c = http.client.HTTPConnection(gs.setting('margo_addr', ''), timeout=5)
 
 	def post(self, path, p, h):
 		if not self.c:
@@ -35,7 +35,7 @@ def post(path, a, default, fail_early=False, can_block=False):
 	resp = None
 
 	try:
-		params = urllib.urlencode({ 'data': json.dumps(a) })
+		params = urllib.parse.urlencode({ 'data': json.dumps(a) })
 		headers = {
 			"Content-type": "application/x-www-form-urlencoded",
 			"Accept": "application/json; charset=utf-8"
@@ -50,7 +50,7 @@ def post(path, a, default, fail_early=False, can_block=False):
 
 	if not isinst(resp, {}):
 		resp = {}
-	if not isinst(resp.get("error"), u""):
+	if not isinst(resp.get("error"), ""):
 		resp["error"] = "Invalid Response"
 	if default is not None and not isinst(resp.get("data"), default):
 		resp["data"] = default
@@ -71,7 +71,7 @@ def call(path='/', args={}, default={}, cb=None, message=''):
 				'tab_indent': gs.setting('fmt_tab_indent'),
 				'tab_width': gs.setting('fmt_tab_width'),
 			}
-			for k, v in args.iteritems():
+			for k, v in args.items():
 				if v is None:
 					v = ''
 				a[k] = v

@@ -1,4 +1,4 @@
-import sublime
+import sublime, sublime_plugin
 from something_borrowed.diff_match_patch.diff_match_patch import diff_match_patch
 import gscommon as gs
 
@@ -35,29 +35,34 @@ def _merge(view, size, text, edit):
 				view.erase(edit, sublime.Region(i, i+l))
 	return dirty
 
-def merge(view, size, text):
-	edit = view.begin_edit()
-	vs = view.settings()
-	ttts = vs.get("translate_tabs_to_spaces")
-	vs.set("translate_tabs_to_spaces", False)
-	origin_src = view.substr(sublime.Region(0, view.size()))
-	if not origin_src.strip():
-		return (False, '')
+class GoSublimeMergeCommand(sublime_plugin.TextCommand):
+	def run(self, edit, size, text):
+		view = self.view
+		vs = view.settings()
+		ttts = vs.get("translate_tabs_to_spaces")
+		vs.set("translate_tabs_to_spaces", False)
+		origin_src = view.substr(sublime.Region(0, view.size()))
+		if not origin_src.strip():
+			return (False, '')
 
-	try:
-		dirty = False
-		err = ''
-		if size < 0:
-			size = view.size()
-		dirty = _merge(view, size, text, edit)
-	except MergeException as (err, d):
-		dirty = True
-		err = "Could not merge changes into the buffer, edit aborted: %s" % err
-		view.replace(edit, sublime.Region(0, view.size()), origin_src)
-	except Exception as ex:
-		err = "where ma bees at?: %s" % ex
-	finally:
-		view.end_edit(edit)
-		vs.set("translate_tabs_to_spaces", ttts)
-		return (dirty, err)
+		try:
+			dirty = False
+			err = ''
+			if size < 0:
+				size = view.size()
+			dirty = _merge(view, size, text, edit)
+		except MergeException as xxx_todo_changeme:
+			(err, d) = xxx_todo_changeme.args
+			dirty = True
+			err = "Could not merge changes into the buffer, edit aborted: %s" % err
+			view.replace(edit, sublime.Region(0, view.size()), origin_src)
+		except Exception as ex:
+			err = "where ma bees at?: %s" % ex
+		finally:
+			vs.set("translate_tabs_to_spaces", ttts)
+
+def merge(view, size, text):
+	view.run_command("go_sublime_merge", {"size": size, "text": text})
+	return (True, '') # TODO
+
 

@@ -19,7 +19,7 @@ SNIPPET_VAR_PAT = re.compile(r'\$\{([a-zA-Z]\w*)\}')
 
 def snippet_match(ctx, m):
 	try:
-		for k,p in m.get('match', {}).iteritems():
+		for k,p in m.get('match', {}).items():
 			q = ctx.get(k, '')
 			if p and gs.is_a_string(p):
 				if not re.search(p, str(q)):
@@ -42,7 +42,7 @@ def resolve_snippets(ctx):
 	cl = set()
 	types = [''] if ctx.get('local') else ctx.get('types')
 	vars = {}
-	for k,v in ctx.iteritems():
+	for k,v in ctx.items():
 		if gs.is_a_string(v):
 			vars[k] = v
 
@@ -69,7 +69,7 @@ def resolve_snippets(ctx):
 									vars['typename_abbr'] = ''
 
 								txt, ttl, val = expand_snippet_vars(vars, text, title, value)
-								s = u'%s\t%s \u0282' % (txt, ttl)
+								s = '%s\t%s \u0282' % (txt, ttl)
 								cl.add((s, val))
 			except:
 				gs.notice(DOMAIN, gs.traceback())
@@ -184,7 +184,7 @@ class GoSublime(sublime_plugin.EventListener):
 					continue
 
 			if is_func or is_func_type:
-				s_sfx = u'\u0282'
+				s_sfx = '\u0282'
 				t_sfx = gs.CLASS_PREFIXES.get('type', '')
 				f_sfx = gs.CLASS_PREFIXES.get('func', '')
 				params, ret = declex(tn)

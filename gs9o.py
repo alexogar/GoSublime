@@ -1,4 +1,9 @@
 import datetime
+import sys
+import os
+scriptpath = os.path.abspath(os.path.dirname(__file__))
+if scriptpath not in sys.path:
+	sys.path.append(scriptpath)
 import gscommon as gs
 import gsshell
 import json
@@ -18,7 +23,7 @@ URL_SCHEME_PAT = re.compile(r'^[\w.+-]+://')
 URL_PATH_PAT = re.compile(r'^(?:[\w.+-]+://|(?:www|(?:\w+\.)*(?:golang|pkgdoc|gosublime)\.org))')
 HIST_EXPAND_PAT = re.compile(r'^(\^+)\s*(\d+)$')
 
-HOURGLASS = u'\u231B'
+HOURGLASS = '\u231B'
 
 DEFAULT_COMMANDS = [
 	'help',
@@ -263,7 +268,7 @@ class Gs9oExecCommand(sublime_plugin.TextCommand):
 				view.run_command('gs9o_init')
 				return
 
-			view.replace(edit, line, (u'[ `%s` %s ]' % (cmd, HOURGLASS)))
+			view.replace(edit, line, ('[ `%s` %s ]' % (cmd, HOURGLASS)))
 			rkey = '9o.exec.%s' % uuid.uuid4()
 			view.add_regions(rkey, [sublime.Region(line.begin(), view.size())], '')
 			view.run_command('gs9o_init')
@@ -416,7 +421,7 @@ def cmd_tskill(view, edit, args, wd, rkey):
 	try:
 		now = datetime.datetime.now().replace(microsecond=0)
 		with gs.sm_lck:
-			tasks = sorted(gs.sm_tasks.iteritems())
+			tasks = sorted(gs.sm_tasks.items())
 
 		l = []
 		for tid, t in tasks:

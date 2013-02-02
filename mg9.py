@@ -7,13 +7,14 @@ import hashlib
 import json
 import margo
 import os
-import Queue
+import queue as Queue
 import re
 import sublime
 import sublime_plugin
 import threading
 import time
 import uuid
+import sys
 
 DOMAIN = 'MarGo'
 REQUEST_PREFIX = '%s.rqst.' % DOMAIN
@@ -148,13 +149,12 @@ def install(aso_tokens, force_install):
 
 	gs.notify('GoSublime', 'Syncing environment variables')
 	out, err, _ = gsshell.run([MARGO_EXE, '-env'], cwd=gs.home_path(), shell=True)
-
 	# notify this early so we don't mask any notices below
 	gs.notify('GoSublime', 'Ready')
 	_check_changes()
 
 	if err:
-		gs.notice(DOMAIN, 'Cannot run get env vars: %s' % (MARGO_EXE, err))
+		gs.notice(DOMAIN, 'Cannot run get env vars: %s, %s' % (MARGO_EXE, err))
 	else:
 		env, err = gs.json_decode(out, {})
 		if err:
@@ -425,7 +425,7 @@ def _send():
 				header, _ = gs.json_encode({'method': method, 'token': req.token})
 				body, _ = gs.json_encode(arg)
 				ln = '%s %s\n' % (header, body)
-				proc.stdin.write(ln)
+				proc.stdin.write(ln.encode(sys.getdefaultencoding()))
 			except Exception:
 				killSrv()
 				gs.println(gs.traceback())
@@ -435,8 +435,9 @@ def _send():
 
 def _read_stdout(proc):
 	try:
+		import sys
 		while True:
-			ln = proc.stdout.readline()
+			ln = proc.stdout.readline().decode(sys.getdefaultencoding())
 			if not ln:
 				break
 
@@ -467,6 +468,7 @@ def _dump(res, err):
 		'err': err,
 	}, sort_keys=True, indent=2))
 
-if not gs.checked(DOMAIN, 'do_init'):
-	atexit.register(killSrv)
-	sublime.set_timeout(do_init, 0)
+def plugin_loaded():
+	if not gs.checked(DOMAIN, 'do_init'):
+		atexit.register(killSrv)
+		sublime.set_timeout(do_init, 0)
